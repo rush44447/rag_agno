@@ -1,0 +1,30 @@
+name: 🚀 Deploy to Ubuntu Server
+
+on:
+  push:
+    branches:
+      - main  # change to your branch if not using main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🧾 Checkout code
+      uses: actions/checkout@v3
+
+    - name: 🔐 Setup SSH access to server
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+    - name: 🚀 SSH into server & deploy
+      run: |
+        ssh -o StrictHostKeyChecking=no root@{{HOST}} << 'EOF'
+          cd /var/www/agno/jobs-board
+          git pull origin main
+          source .venv/bin/activate
+          pip uninstall -y numpy pandas yfinance
+          pip install numpy==1.26.4 pandas==2.2.2 yfinance==0.2.37
+          pm2 restart jobs-board
+        EOF
